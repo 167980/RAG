@@ -19,6 +19,8 @@ from app.services.vectorizer import embedder
 from app.services.vectorizer import chunk_text
 
 
+
+
 router = APIRouter()
 
 # constants
@@ -33,18 +35,57 @@ PHOTO_DIR = UPLOAD_DIR / "photos"
 PHOTO_DIR.mkdir(exist_ok=True)
 
 
+# @router.post("/scrape-jobs")
+# async def scrape_and_ingest_jobs():
+#     # 1. Scrape vacancies
+#     vacancies = scrape_vacancies()
 
+#     # 2. For each vacancy, process text (chunk + embed) and store
+#     for job in vacancies:
+#         metadata = {
+#             "title": job["title"],
+#             "link": job["link"]
+#         }
+#         metadata_json = json.dumps(metadata) 
+#         save_chunks_to_db(job["description"], metadata_json)
 
+#     return {"message": f"{len(vacancies)} vacancies scraped and stored successfully"}
+
+# @router.post("/update-jobs")
+# async def update_jobs():
+#     """
+#     Scrape WorldLink career site and save jobs into DB.
+#     """
+#     try:
+#         jobs = scrape_worldlink_jobs()
+#         if not jobs:
+#             raise HTTPException(status_code=404, detail="No jobs found")
+
+#         await save_chunks_to_db(jobs)
+
+#         return {"message": f"{len(jobs)} jobs scraped and saved successfully."}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 def save_file_metadata_to_db(filename: str, uploaded_by: str, title: str, file_path: str, file_type: str, description=None):
     db = SessionLocal()
     try:
+          # ✅ Generate the file_url
+        base_url = "http://localhost:8000/media"  # Replace with your actual domain or env var
+        print(f"Base URL: {base_url}")
+        print(f"File path: {file_path}")
+        relative_path = file_path.replace("uploaded_files\\", "").replace("\\", "/")
+        print(f"Relative path: {relative_path}")
+        file_url = f"{base_url}/{relative_path}"
+
+
         metadata = {
             "uploader": uploaded_by,
             "title": title,
             "page_number": 1,
             "uploaded_at": datetime.utcnow().isoformat(),
             "file_path": file_path,
+            "file_url": file_url,
             "type": file_type,
             "description":description
         }
@@ -76,13 +117,14 @@ def save_file_metadata_to_db(filename: str, uploaded_by: str, title: str, file_p
                 embedding=None,
                 extra_metadata=metadata
             )
-        doc_chunk = DocumentChunk(
-            chunk_text="",  # no text for forms/photos
-            filename=filename,
-            embedding=None,
-            extra_metadata=json.dumps(metadata)
-        )
         db.add(new_entry)
+        # doc_chunk = DocumentChunk(
+        #     chunk_text="",  # no text for forms/photos
+        #     filename=filename,
+        #     embedding=None,
+        #     extra_metadata=json.dumps(metadata)
+        # )
+        # db.add(new_entry)
         db.commit()
     finally:
         db.close()
@@ -277,30 +319,86 @@ def extract_text_from_txt(filepath: Path) -> str:
 #     df = pd.read_csv(filepath)
 #     return df.to_string(index=False)
 
-def extract_text_from_csv(filepath: Path) -> List[dict]:
-    
+# def extract_text_from_csv(filepath: Path) -> List[dict]:
+    # 
     # Return CSV data as column-wise chunks directly in the expected format.
     # Each column is one chunk: header + values.
     # Page number is always 1 for CSV.
     
-    pages = []
+    # # pages = []
+    # try:
+    #     df = pd.read_csv(filepath)
+
+    #     # For each column, create a chunk with header and values
+    #     for col in df.columns:
+    #         col_values = [col] + df[col].astype(str).tolist()
+    #         chunk_text = "\n".join(col_values)
+
+    #         pages.append({
+    #             "page_number": 1,
+    #             "text": chunk_text
+    #         })
+
+    # except Exception as e:
+    #     print(f"CSV extraction error: {e}")
+
+    # return pages
+# def extract_text_from_csv(filepath: Path) -> str:
+#     try:
+#         df = pd.read_csv(filepath)
+
+#         # Convert each column into header + values
+#         column_texts = []
+#         for col in df.columns:
+#             col_values = [col] + df[col].astype(str).tolist()
+#             column_texts.append("\n".join(col_values))
+
+#         # Combine all columns into one big text
+#         return "\n\n".join(column_texts)
+
+#     except Exception as e:
+#         print(f"CSV extraction error: {e}")
+#         return "" 
+# def extract_text_from_csv(filepath: Path) -> str:
+#     """
+#     Minimal CSV handler: convert to plain text row-wise.
+#     Compatible with existing upload logic (returns single string).
+#     """
+#     try:
+#         df = pd.read_csv(filepath)
+
+#         # Each row = key=value pairs
+#         rows_text = []
+#         for idx, row in df.iterrows():
+#             row_text = ", ".join([f"{col}={row[col]}" for col in df.columns])
+#             rows_text.append(row_text)
+
+#         return "\n\n".join(rows_text)  # Single string, row separated
+
+#     except Exception as e:
+#         print(f"CSV extraction error: {e}")
+#         return ""
+def extract_text_from_csv(filepath: Path) -> str:
+    """
+    Minimal CSV handler: convert to descriptive sentences row-wise.
+    Compatible with existing upload logic (returns single string).
+    """
     try:
         df = pd.read_csv(filepath)
 
-        # For each column, create a chunk with header and values
-        for col in df.columns:
-            col_values = [col] + df[col].astype(str).tolist()
-            chunk_text = "\n".join(col_values)
+        rows_text = []
+        for idx, row in df.iterrows():
+            # Generate descriptive sentences per row
+            row_text = "; ".join([f"{col}: {row[col]}" for col in df.columns]) + "."
+            rows_text.append(row_text)
 
-            pages.append({
-                "page_number": 1,
-                "text": chunk_text
-            })
+        return "\n".join(rows_text)  # Single string, rows separated by newline
 
     except Exception as e:
         print(f"CSV extraction error: {e}")
+        return ""
 
-    return pages
+
 
 
 # def extract_text_from_image(filepath: Path) -> str:

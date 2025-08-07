@@ -212,7 +212,11 @@ class QueryRequest(BaseModel):
 @router.post("/query")
 async def query_text(request: QueryRequest):
     corrected_query = preprocess_query_with_llm(request.question)
+
+    
     keywords = ["form", "photo"]
+
+    
 
     # Tokenize corrected query into words
     query_words = re.findall(r"\b\w+\b", corrected_query.lower())
@@ -253,11 +257,14 @@ async def query_text(request: QueryRequest):
                         metadata = {}
 
                 file_path = metadata.get("file_path")
+                file_url = metadata.get("file_url") 
                 if file_path not in seen_files:
                     seen_files.add(file_path)
                     matches.append({
                         "file_path": file_path,
-                        "score": float(row[2])
+                        "file_url": file_url,
+                        "score": float(row[2]),
+                        "metadata": metadata
                     })
                     top_chunks.append(
                         f"(Page {metadata.get('page_number')}, Title: {metadata.get('title')}, "
@@ -270,7 +277,11 @@ async def query_text(request: QueryRequest):
             "original_question": request.question,
             "corrected_question": corrected_query,
             "matches": matches,
-            "answer": answer
+            "answer": {
+                "text": answer,
+                "metadata":matches
+            }
+            
         }
 
     # If no metadata keyword, do a general similarity search
@@ -299,6 +310,7 @@ async def query_text(request: QueryRequest):
                     metadata = json.loads(metadata)
                 except:
                     metadata = {}
+            file_url = metadata.get("file_url")
 
             top_chunks.append(
                 f"(Page {metadata.get('page_number')}, Title: {metadata.get('title')}, "
@@ -306,7 +318,7 @@ async def query_text(request: QueryRequest):
             )
 
     answer = ask_groq_llm(query=request.question, context_chunks=top_chunks)
-
+    
     return {
         "original_question": request.question,
         "corrected_question": corrected_query,
@@ -319,5 +331,9 @@ async def query_text(request: QueryRequest):
             }
             for row in results
         ],
-        "answer": answer
-    }
+        "answer":{
+            "answer": answer,
+            "chunks": metadata
+           
+        }
+}

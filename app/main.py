@@ -5,9 +5,15 @@ from app.api.query import router as query_router
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import DocumentChunk
+from fastapi.staticfiles import StaticFiles
+from app.services.job_endpoint import router as job_router
 
 
 app = FastAPI()
+
+# Mount the uploaded_files directory
+app.mount("/media", StaticFiles(directory="uploaded_files"), name="media")
+
 #craete tables on startup
 Base.metadata.create_all(bind=engine)
 
@@ -24,5 +30,4 @@ def read_docs(db: Session = Depends(get_db)):
 
 app.include_router(ingest_router, prefix="/api")
 app.include_router(query_router, prefix="/api")
-
-
+app.include_router(job_router, prefix="/api")
