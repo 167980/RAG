@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from pgvector.sqlalchemy import Vector
 from dotenv import load_dotenv
 import os
 

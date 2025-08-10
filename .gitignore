@@ -35,3 +35,5 @@ coverage.xml
 .env
 
 myenv/
+
+uploaded_files

@@ -6,9 +6,6 @@ from datetime import datetime, timedelta, timezone
 
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-# def chunk_text(text, chunk_size=300):
-#     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
- 
 def chunk_text(text):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=2000,      # Size of each chunk
@@ -48,9 +45,6 @@ def save_chunks_to_db(text: str, filename: str, uploader: str = "anonymous", tit
                 filename=filename,
                 chunk_text=chunk,
                 embedding=vec.tolist(),
-                # uploader=uploader,
-                # title=title,
-                # page_number=int(page_number)
                 extra_metadata=metadata
                
             )
@@ -59,5 +53,3 @@ def save_chunks_to_db(text: str, filename: str, uploader: str = "anonymous", tit
     finally:
         session.close()
     
-# SELECT * FROM public.document_chunks
-# ORDER BY id ASC 

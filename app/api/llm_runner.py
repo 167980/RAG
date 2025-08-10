@@ -1,16 +1,14 @@
 import os
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
-
-
+from langchain_ollama import ChatOllama
 
 load_dotenv()
 
-client = ChatGroq(
-    api_key=os.getenv("GROQ_API_KEY"),
-    model="moonshotai/kimi-k2-instruct"  
+client = ChatOllama(
+   
+    model="mistral"  
 )
 
 def safe_load_metadata(meta_raw):
@@ -23,34 +21,6 @@ def safe_load_metadata(meta_raw):
     except Exception:
         return None 
     
-# def preprocess_query_with_llm(query: str) -> str:
-#     """
-#     Corrects spelling and rephrases the query using LLM.
-#     """
-#     prompt = f"Correct any spelling mistakes and rephrase this query naturally if there is no need for change return as it is:\n\n{query}"
-#     corrected_query = ask_groq_llm(query=prompt, context_chunks=[])  # pass empty list
-#     return corrected_query
-
-# def preprocess_query_with_llm(query: str) -> str:
-#     """
-#     Corrects spelling and rephrases the query using LLM.
-#     Only modifies if there is an actual mistake; else returns original query as is.
-#     """
-#     prompt = f"""Check the following query for any spelling or grammar mistakes.
-# If mistakes exist, correct and rephrase naturally.
-# If no mistakes, respond with the exact same query.
-
-# Query:
-# {query}
-# """
-#     corrected_query = ask_groq_llm(query=prompt, context_chunks=[])
-    
-#     # Normalize for comparison
-#     if corrected_query.strip().lower() == query.strip().lower():
-#         return query
-#     return corrected_query
-
-
 def preprocess_query_with_llm(query: str) -> str:
     """
     Fixes spelling and grammar only. If query is already correct, returns as is.
@@ -74,7 +44,7 @@ Corrected:
 
 
 
-def ask_groq_llm(query: str, context_chunks: list[str]) -> str:
+def ask_llm(query: str, context_chunks: list[str]) -> str:
    if context_chunks:
     context_text ="\n\n".join([
         f"(Page {row[3]}, Title: {meta.get('title')}, Uploader: {meta.get('uploader')}, "
@@ -96,4 +66,4 @@ Question: {query}
 Answer(include page number references with bullet points):"""
 
    response = client.invoke(prompt)
-   return response.content.strip()  
+   return response.content.strip()
