@@ -6,9 +6,10 @@ from langchain_ollama import ChatOllama
 
 load_dotenv()
 
+
 client = ChatOllama(
-   
-    model="mistral"  
+    base_url="http://host.docker.internal:11434",
+    model="mistral"
 )
 
 def safe_load_metadata(meta_raw):

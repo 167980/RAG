@@ -1,0 +1,7 @@
+.env/
+
+uploaded_files/
+
+app/__pycache__/
+
+.gitignore/

@@ -9,7 +9,7 @@ def save_jobs_to_db(jobs, manual_description=None):
     try:
         for job in jobs:
             # Combine title + deadline + scraped description
-            chunk_text = f"{job['title']} | Deadline: {job['deadline']}\n{job['description']}"
+            chunk_text = f"Job: {job['title']} | Deadline: {job['deadline']}"
 
             # Generate embedding
             embedding = get_query_embedding(chunk_text)

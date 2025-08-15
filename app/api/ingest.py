@@ -306,22 +306,6 @@ def extract_text_from_image(filepath: Path) -> List[dict]:
         # Convert rows to columns (assume words per row are space separated)
         split_rows = [row.split() for row in rows if row.strip()]
 
-        # if split_rows:
-        #     # Transpose rows into columns (if table)
-        #     transposed = list(zip(*split_rows))  # Columns = tuples of column values
-
-        #     for col in transposed:
-        #         col_text = "\n".join(col)
-        #         pages.append({
-        #             "page_number": 1,
-        #             "text": col_text
-        #         })
-        # else:
-        #     # Fallback: return full OCR text if no structure detected
-        #     pages.append({
-        #         "page_number": 1,
-        #         "text": raw_text
-        #     })
         pages.append({
                 "page_number": 1,
                 "text": raw_text
